@@ -1,4 +1,4 @@
-import { CustomDateRange, FilterBy } from "./type";
+import { CustomDateRange, E_LAYOUT_MODE, FilterBy } from "./type";
 
 export const showHideNodeById = (
   id: string,
@@ -15,6 +15,15 @@ export const getDateTitle = (type: FilterBy) => {
   else if (type === FilterBy.LastWeek) return "Last 7 days";
   return "Today";
 };
+
+export const getBetTypeTitle = (type: string) => {
+  if (type === E_LAYOUT_MODE.FREESPIN) return "Free Spin";
+  else if (type === E_LAYOUT_MODE.GAMBLE) return "Gamble";
+  else if (type === E_LAYOUT_MODE.JACKPOT) return "Jackpot";
+  return "Normal"
+};
+
+
 
 export const calculateDateRange = (
   type: FilterBy,
@@ -105,4 +114,14 @@ export const objectToQueryString = (obj: QueryParams) => {
   }
 
   return params.toString();
+};
+
+export const getTimeZoneOffset = (date: Date) => {
+  const offset = new Date(date).getTimezoneOffset();
+  const sign = offset <= 0 ? "+" : "-";
+  const hours = Math.floor(Math.abs(offset) / 60);
+  const minutes = Math.abs(offset) % 60;
+  return `GMT${sign}${String(hours).padStart(2, "0")}:${String(
+    minutes
+  ).padStart(2, "0")}`;
 };

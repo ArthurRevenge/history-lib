@@ -13,7 +13,9 @@ import {
   calculateDateRange,
   displayDate,
   displayTime,
+  getBetTypeTitle,
   getDateTitle,
+  getTimeZoneOffset,
   objectToQueryString,
   parseQueryParams,
   showHideNodeById,
@@ -291,11 +293,236 @@ export const renderFooter = (sumRecord: RecordTotal | null) => {
 
 export const renderDetail = (data: HistoryDetail) => {
   const parentNode = document.getElementById("history-detail");
-  // // showHideNodeById("game-list-view-wrapper");
-  if(parentNode){
-    
+  showHideNodeById("game-list-view-wrapper");
+  if (parentNode) {
+    showHideNodeById("history-detail", true);
+
+    const historyHeader = document.createElement("div");
+    historyHeader.classList.add(
+      "history-header",
+      "flex-item-center-content-center"
+    );
+
+    const navBack = document.createElement("div");
+    navBack.classList.add("nav-back");
+    navBack.onclick = () => onclickDetailBack();
+
+    const gameListNavImageLeft = document.createElement("div");
+    gameListNavImageLeft.classList.add("game-list-nav-image-left");
+
+    const ghArrow = document.createElement("div");
+    ghArrow.classList.add("gh-arrow");
+
+    gameListNavImageLeft.appendChild(ghArrow);
+    navBack.appendChild(gameListNavImageLeft);
+    historyHeader.appendChild(navBack);
+
+    const titleContainer = document.createElement("div");
+    titleContainer.classList.add("flex-item-center-content-center");
+    titleContainer.style.flexDirection = "column";
+    titleContainer.style.width = "56%";
+
+    const title = document.createElement("div");
+    title.classList.add("title");
+    title.textContent = getBetTypeTitle(data.betType);
+
+    const subTitle = document.createElement("div");
+    subTitle.classList.add("sub-title");
+    subTitle.textContent = `${displayDate(new Date(data.created))} ${displayTime(
+      new Date(data.created)
+    )} (${getTimeZoneOffset(new Date(data.created))})`;
+
+    titleContainer.appendChild(title);
+    titleContainer.appendChild(subTitle);
+    historyHeader.appendChild(titleContainer);
+
+    const rightDiv = document.createElement("div");
+    rightDiv.classList.add("right");
+    historyHeader.appendChild(rightDiv);
+
+    parentNode.appendChild(historyHeader);
+
+    const selectionList = document.createElement("div");
+    selectionList.classList.add("selection-list");
+
+    parentNode.appendChild(selectionList);
+
+    const selectionListItem = document.createElement("div");
+    selectionListItem.classList.add("selection-list-item");
+
+    const itemData = [
+      { detail: "179023294 0841467392", label: "Transaction" },
+      { detail: `${data.betAmount}`, label: "Bet" },
+      { detail: `${data.profit}`, label: "Profit" },
+      { detail: `${data.endingBalance}`, label: "Balance" },
+    ];
+
+    itemData.forEach((data) => {
+      const item = document.createElement("div");
+      item.classList.add("item");
+
+      const itemDetail1 = document.createElement("div");
+      itemDetail1.classList.add("item-detail");
+      itemDetail1.textContent = data.detail;
+
+      const itemDetail2 = document.createElement("div");
+      itemDetail2.classList.add("item-detail");
+      itemDetail2.textContent = data.label;
+
+      item.appendChild(itemDetail1);
+      item.appendChild(itemDetail2);
+
+      selectionListItem.appendChild(item);
+    });
+
+    selectionList.appendChild(selectionListItem);
+
+    const historyRegular = document.createElement("div");
+    historyRegular.classList.add("history-regular");
+
+    const betInfo = document.createElement("div");
+    betInfo.classList.add("bet-info");
+
+    const betSizeLabel = document.createElement("div");
+    betSizeLabel.classList.add("bet-size-label");
+    betSizeLabel.textContent = `Bet Size ${data.betSize}`;
+
+    const separator = document.createElement("div");
+    separator.classList.add("separator");
+
+    const betLevelLabel = document.createElement("div");
+    betLevelLabel.classList.add("bet-level-label");
+    betLevelLabel.textContent = `Bet Level ${data.betLevel}`;
+
+    betInfo.appendChild(betSizeLabel);
+    betInfo.appendChild(separator);
+    betInfo.appendChild(betLevelLabel);
+
+    historyRegular.appendChild(betInfo);
+
+    const betResult = document.createElement("div");
+    betResult.classList.add("bet-result");
+
+    const betContainer = document.createElement("div");
+    betContainer.classList.add("bet-container");
+
+    for (let i = 0; i < 3; i++) {
+      const row = document.createElement("div");
+      row.classList.add("row");
+
+      for (let j = 0; j < 3; j++) {
+        const item = document.createElement("div");
+        item.classList.add("item");
+
+        if ((i * j) % 2 === 0) {
+          const bg = document.createElement("img");
+          bg.classList.add("img-bg");
+          bg.src = `/src/symbol/bg-win.png`;
+          item.appendChild(bg);
+        }
+
+        const symbol = document.createElement("img");
+        symbol.classList.add("symbol");
+        symbol.src = `/src/symbol/h1_coins.png`;
+
+        item.appendChild(symbol);
+        row.appendChild(item);
+      }
+
+      betContainer.appendChild(row);
+    }
+
+    betResult.appendChild(betContainer);
+
+    const globular = document.createElement("div");
+    globular.classList.add("globular", "flex-item-center-content-center");
+
+    const bgImage = document.createElement("img");
+    bgImage.classList.add("bg");
+    bgImage.src = "./src/symbol/ui_discoball_00.png";
+
+    const mulImage = document.createElement("img");
+    mulImage.classList.add("mul");
+    mulImage.src = "./src/symbol/mul_x10.png";
+
+    globular.appendChild(bgImage);
+    globular.appendChild(mulImage);
+
+    betResult.appendChild(globular);
+
+    historyRegular.appendChild(betResult);
+
+    const payoutTitle = document.createElement("div");
+    payoutTitle.classList.add(
+      "payout-title",
+      "flex-item-center-content-center"
+    );
+
+    const payoutTitleLeft = document.createElement("div");
+    payoutTitleLeft.classList.add("payout-title-left");
+
+    const payoutTitleText = document.createTextNode("Payout");
+
+    const payoutTitleRight = document.createElement("div");
+    payoutTitleRight.classList.add("payout-title-right");
+
+    payoutTitle.appendChild(payoutTitleLeft);
+    payoutTitle.appendChild(payoutTitleText);
+    payoutTitle.appendChild(payoutTitleRight);
+
+    historyRegular.appendChild(payoutTitle);
+
+    const payoutDetail = document.createElement("div");
+    payoutDetail.classList.add("payout-detail");
+
+    const payoutItem = document.createElement("div");
+    payoutItem.classList.add("payout-item", "flex-item-center-content-between");
+    payoutItem.onclick = () => toggleTooltip();
+
+    const payoutLeft = document.createElement("div");
+    payoutLeft.classList.add("left");
+    payoutLeft.textContent = "02";
+
+    const payoutRight = document.createElement("div");
+    payoutRight.classList.add("right");
+
+    const value = document.createElement("div");
+    value.classList.add("value");
+    value.textContent = "1.80";
+
+    const ghBasicSprite = document.createElement("div");
+    ghBasicSprite.classList.add("gh_basic_sprite");
+
+    payoutRight.appendChild(value);
+    payoutRight.appendChild(ghBasicSprite);
+
+    payoutItem.appendChild(payoutLeft);
+    payoutItem.appendChild(payoutRight);
+
+    payoutDetail.appendChild(payoutItem);
+
+    const payoutTooltip = document.createElement("div");
+    payoutTooltip.id = "payout-tooltip";
+
+    const triangle = document.createElement("div");
+    triangle.classList.add("triangle");
+
+    const label = document.createElement("div");
+    label.classList.add("label");
+    label.textContent = "Bet Size x Bet Level x Symbol Payout Values";
+
+    const valueTooltip = document.createElement("div");
+    valueTooltip.classList.add("value");
+    valueTooltip.textContent = `${data.betSize} x ${data.betLevel} x 3`;
+
+    payoutTooltip.appendChild(triangle);
+    payoutTooltip.appendChild(label);
+    payoutTooltip.appendChild(valueTooltip);
+
+    payoutDetail.appendChild(payoutTooltip);
+    historyRegular.appendChild(payoutDetail);
+    selectionList.appendChild(historyRegular);
   }
- 
 };
 
 export const showHideHistory = (isShow: boolean) => {
@@ -308,6 +535,15 @@ export const destroyHistory = () => {
 
 export const backToHistoryMenu = () => {
   showHideNodeById("selection-date");
+};
+
+export const toggleTooltip = () => {
+  const tooltip = document.getElementById("payout-tooltip");
+  if (tooltip) {
+    const isShow =
+      window.getComputedStyle(tooltip).getPropertyValue("display") === "block";
+    showHideNodeById("payout-tooltip", !isShow, "block");
+  }
 };
 
 export const selectDateBy = (filterBy: number) => {
@@ -325,6 +561,14 @@ export const selectDateBy = (filterBy: number) => {
   }
 
   backToHistoryMenu();
+};
+
+export const onclickDetailBack = () => {
+  showHideNodeById("game-list-view-wrapper", true);
+  showHideNodeById("history-detail");
+
+  //remove child of history-detail
+  document.getElementById("history-detail")?.replaceChildren("");
 };
 
 class HistoryGameClient {
@@ -407,9 +651,9 @@ class HistoryGameClient {
         ? parseQueryParams()
         : {
             brandCode: "mock",
-            gameCode: "dragon-fortune",
+            gameCode: "fortune-mouse",
             groupCode: "weas",
-            playerToken: "wexqm1ubblp7g65cq79bqgpp",
+            playerToken: "s8z060uxk7320c40owgr1moo",
           };
 
     const url1 = `${url}?${objectToQueryString(baseQuery)}&startDate=${

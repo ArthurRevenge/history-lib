@@ -49,10 +49,16 @@ export enum SYMBOL_ID {
   LANTERN,
   FIRE_CRACKER,
   RIBBON,
-  COIN
+  COIN,
 }
 
-export const url =
-  "https://api.dev.revenge-games.com/dragon-fortune/bets";
+export enum E_LAYOUT_MODE {
+  NORMAL = "NORMAL",
+  FREESPIN = "FREESPIN",
+  GAMBLE = "GAMBLE",
+  JACKPOT = "JACKPOT",
+}
+
+export const url = "https://api.dev.revenge-games.com/fortune-mouse/bets";
 export const urlTotal =
-  "https://api.dev.revenge-games.com/dragon-fortune/total-bets";
+  "https://api.dev.revenge-games.com/fortune-mouse/total-bets";
