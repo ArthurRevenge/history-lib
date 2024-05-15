@@ -20,10 +20,8 @@ export const getBetTypeTitle = (type: string) => {
   if (type === E_LAYOUT_MODE.FREESPIN) return "Free Spin";
   else if (type === E_LAYOUT_MODE.GAMBLE) return "Gamble";
   else if (type === E_LAYOUT_MODE.JACKPOT) return "Jackpot";
-  return "Normal"
+  return "Normal";
 };
-
-
 
 export const calculateDateRange = (
   type: FilterBy,
@@ -124,4 +122,14 @@ export const getTimeZoneOffset = (date: Date) => {
   return `GMT${sign}${String(hours).padStart(2, "0")}:${String(
     minutes
   ).padStart(2, "0")}`;
+};
+
+export const isChildOf = (child: HTMLElement | null, parent: HTMLElement) => {
+  while (child !== null) {
+    if (child === parent) {
+      return true;
+    }
+    child = child.parentElement; // Use parentElement instead of parentNode for type safety
+  }
+  return false;
 };

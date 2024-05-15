@@ -16,6 +16,7 @@ import {
   getBetTypeTitle,
   getDateTitle,
   getTimeZoneOffset,
+  isChildOf,
   objectToQueryString,
   parseQueryParams,
   showHideNodeById,
@@ -89,10 +90,15 @@ export const createHistoryElement = () => {
   gameListViewContentsContainer.appendChild(historyTableHeader);
 
   const tableItems = ["Time", "Transaction", "Bet", "Profit"];
-  tableItems.forEach((item) => {
+  tableItems.forEach((item, index) => {
     const tableItem = document.createElement("div");
     tableItem.classList.add("game-list-nav-table-item");
     tableItem.textContent = item;
+    if (index === 0) {
+      const time = document.createElement("div");
+      time.textContent = `(${getTimeZoneOffset(new Date())})`;
+      tableItem.appendChild(time);
+    }
     historyTableHeader.appendChild(tableItem);
   });
 
@@ -292,6 +298,7 @@ export const renderFooter = (sumRecord: RecordTotal | null) => {
 };
 
 export const renderDetail = (data: HistoryDetail) => {
+  console.log(data);
   const parentNode = document.getElementById("history-detail");
   showHideNodeById("game-list-view-wrapper");
   if (parentNode) {
@@ -328,9 +335,11 @@ export const renderDetail = (data: HistoryDetail) => {
 
     const subTitle = document.createElement("div");
     subTitle.classList.add("sub-title");
-    subTitle.textContent = `${displayDate(new Date(data.created))} ${displayTime(
+    subTitle.textContent = `${displayDate(
       new Date(data.created)
-    )} (${getTimeZoneOffset(new Date(data.created))})`;
+    )} ${displayTime(new Date(data.created))} (${getTimeZoneOffset(
+      new Date(data.created)
+    )})`;
 
     titleContainer.appendChild(title);
     titleContainer.appendChild(subTitle);
@@ -351,7 +360,7 @@ export const renderDetail = (data: HistoryDetail) => {
     selectionListItem.classList.add("selection-list-item");
 
     const itemData = [
-      { detail: "179023294 0841467392", label: "Transaction" },
+      { detail: `${data.id}`, label: "Transaction" },
       { detail: `${data.betAmount}`, label: "Bet" },
       { detail: `${data.profit}`, label: "Profit" },
       { detail: `${data.endingBalance}`, label: "Balance" },
@@ -414,12 +423,12 @@ export const renderDetail = (data: HistoryDetail) => {
         const item = document.createElement("div");
         item.classList.add("item");
 
-        if ((i * j) % 2 === 0) {
-          const bg = document.createElement("img");
-          bg.classList.add("img-bg");
-          bg.src = `/src/symbol/bg-win.png`;
-          item.appendChild(bg);
-        }
+        // if ((i * j) % 2 === 0) {
+        //   const bg = document.createElement("img");
+        //   bg.classList.add("img-bg");
+        //   bg.src = `/src/symbol/bg-win.png`;
+        //   item.appendChild(bg);
+        // }
 
         const symbol = document.createElement("img");
         symbol.classList.add("symbol");
@@ -472,55 +481,62 @@ export const renderDetail = (data: HistoryDetail) => {
 
     historyRegular.appendChild(payoutTitle);
 
-    const payoutDetail = document.createElement("div");
-    payoutDetail.classList.add("payout-detail");
+    if (data.spinResult.winLines.length > 0) {
+      data.spinResult.winLines.forEach((x) => {
+        const payoutDetail = document.createElement("div");
+        payoutDetail.classList.add("payout-detail");
 
-    const payoutItem = document.createElement("div");
-    payoutItem.classList.add("payout-item", "flex-item-center-content-between");
-    payoutItem.onclick = () => toggleTooltip();
+        const payoutItem = document.createElement("div");
+        payoutItem.classList.add(
+          "payout-item",
+          "flex-item-center-content-between"
+        );
+        payoutItem.onclick = () =>
+          toggleTooltip(payoutDetail, data.betSize, data.betLevel, x.winSymbol);
 
-    const payoutLeft = document.createElement("div");
-    payoutLeft.classList.add("left");
-    payoutLeft.textContent = "02";
+        const payoutLeft = document.createElement("div");
+        payoutLeft.classList.add("left", "flex-item-center-content-between");
 
-    const payoutRight = document.createElement("div");
-    payoutRight.classList.add("right");
+        const lineNumber = document.createElement("div");
+        lineNumber.textContent = `0${x.lineId + 1}`;
 
-    const value = document.createElement("div");
-    value.classList.add("value");
-    value.textContent = "1.80";
+        const matrix = document.createElement("img");
+        matrix.src = `./src/symbol/${x.lineId + 1}_winline.jpeg`;
 
-    const ghBasicSprite = document.createElement("div");
-    ghBasicSprite.classList.add("gh_basic_sprite");
+        payoutLeft.appendChild(lineNumber);
+        payoutLeft.appendChild(matrix);
 
-    payoutRight.appendChild(value);
-    payoutRight.appendChild(ghBasicSprite);
+        const payoutRight = document.createElement("div");
+        payoutRight.classList.add("right");
 
-    payoutItem.appendChild(payoutLeft);
-    payoutItem.appendChild(payoutRight);
+        const value = document.createElement("div");
+        value.classList.add("value");
+        value.textContent = `${(data.betSize * data.betLevel * x.winSymbol).toFixed(2)}`;
 
-    payoutDetail.appendChild(payoutItem);
+        const ghBasicSprite = document.createElement("div");
+        ghBasicSprite.classList.add("gh_basic_sprite");
 
-    const payoutTooltip = document.createElement("div");
-    payoutTooltip.id = "payout-tooltip";
+        payoutRight.appendChild(value);
+        payoutRight.appendChild(ghBasicSprite);
 
-    const triangle = document.createElement("div");
-    triangle.classList.add("triangle");
+        payoutItem.appendChild(payoutLeft);
+        payoutItem.appendChild(payoutRight);
 
-    const label = document.createElement("div");
-    label.classList.add("label");
-    label.textContent = "Bet Size x Bet Level x Symbol Payout Values";
+        payoutDetail.appendChild(payoutItem);
 
-    const valueTooltip = document.createElement("div");
-    valueTooltip.classList.add("value");
-    valueTooltip.textContent = `${data.betSize} x ${data.betLevel} x 3`;
+        historyRegular.appendChild(payoutDetail);
+      });
+    } else {
+      const noWinning = document.createElement("div");
+      noWinning.classList.add(
+        "no-winning-combination-container",
+        "flex-item-center-content-center"
+      );
+      noWinning.textContent = "No Winning Combination";
 
-    payoutTooltip.appendChild(triangle);
-    payoutTooltip.appendChild(label);
-    payoutTooltip.appendChild(valueTooltip);
+      historyRegular.appendChild(noWinning);
+    }
 
-    payoutDetail.appendChild(payoutTooltip);
-    historyRegular.appendChild(payoutDetail);
     selectionList.appendChild(historyRegular);
   }
 };
@@ -537,13 +553,66 @@ export const backToHistoryMenu = () => {
   showHideNodeById("selection-date");
 };
 
-export const toggleTooltip = () => {
+export const toggleTooltip = (
+  parent: any,
+  betSize: number,
+  betLevel: number,
+  value: number
+) => {
   const tooltip = document.getElementById("payout-tooltip");
-  if (tooltip) {
-    const isShow =
-      window.getComputedStyle(tooltip).getPropertyValue("display") === "block";
-    showHideNodeById("payout-tooltip", !isShow, "block");
+
+  const isChild = isChildOf(tooltip, parent);
+  if(isChild){
+    tooltip?.remove();
+  }else{
+    const payoutTooltip = document.createElement("div");
+    payoutTooltip.id = "payout-tooltip";
+  
+    const triangle = document.createElement("div");
+    triangle.classList.add("triangle");
+  
+    const label = document.createElement("div");
+    label.classList.add("label");
+    label.textContent = "Bet Size x Bet Level x Symbol Payout Values";
+  
+    const valueTooltip = document.createElement("div");
+    valueTooltip.classList.add("value");
+    valueTooltip.textContent = `${betSize} x ${betLevel} x ${value}`;
+  
+    payoutTooltip.appendChild(triangle);
+    payoutTooltip.appendChild(label);
+    payoutTooltip.appendChild(valueTooltip);
+  
+    parent.appendChild(payoutTooltip);
   }
+
+
+  // const payoutTooltip = document.createElement("div");
+  // payoutTooltip.id = "payout-tooltip";
+
+  // const triangle = document.createElement("div");
+  // triangle.classList.add("triangle");
+
+  // const label = document.createElement("div");
+  // label.classList.add("label");
+  // label.textContent = "Bet Size x Bet Level x Symbol Payout Values";
+
+  // const valueTooltip = document.createElement("div");
+  // valueTooltip.classList.add("value");
+  // valueTooltip.textContent = `${betSize} x ${betLevel} x ${value}`;
+
+  // payoutTooltip.appendChild(triangle);
+  // payoutTooltip.appendChild(label);
+  // payoutTooltip.appendChild(valueTooltip);
+
+  // parent.appendChild(payoutTooltip);
+
+  // const tooltip = document.getElementById("payout-tooltip");
+  // if (tooltip) {
+  //   const isShow =
+  //     window.getComputedStyle(tooltip).getPropertyValue("display") === "block";
+  //   showHideNodeById("payout-tooltip", !isShow, "block");
+  // }
 };
 
 export const selectDateBy = (filterBy: number) => {
@@ -651,7 +720,7 @@ class HistoryGameClient {
         ? parseQueryParams()
         : {
             brandCode: "mock",
-            gameCode: "fortune-mouse",
+            gameCode: "dragon-fortune",
             groupCode: "weas",
             playerToken: "s8z060uxk7320c40owgr1moo",
           };
