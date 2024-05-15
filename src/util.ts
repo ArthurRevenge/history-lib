@@ -1,4 +1,4 @@
-import { CustomDateRange, E_LAYOUT_MODE, FilterBy } from "./type";
+import { CustomDateRange, E_LAYOUT_MODE, FilterBy, SYMBOL_ID } from "./type";
 
 export const showHideNodeById = (
   id: string,
@@ -133,3 +133,23 @@ export const isChildOf = (child: HTMLElement | null, parent: HTMLElement) => {
   }
   return false;
 };
+
+
+export const getSymbolImage = (id: SYMBOL_ID) => {
+  switch (id) {
+      case SYMBOL_ID.WILD:
+          return '/src/symbol/s_wild.png'
+      case SYMBOL_ID.COIN:
+        return '/src/symbol/h1_coins.png'
+      case SYMBOL_ID.RIBBON:
+        return '/src/symbol/h2_ribbon.png'
+      case SYMBOL_ID.FIRE_CRACKER:
+        return '/src/symbol/h3_firecracker.png'
+      case SYMBOL_ID.LANTERN:
+        return '/src/symbol/h4_lantern.png'
+      case SYMBOL_ID.ANGBAO:
+        return '/src/symbol/h5_angbao.png'
+      case SYMBOL_ID.INGOT:
+        return '/src/symbol/h6_ingot.png'
+  }
+}

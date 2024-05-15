@@ -35,7 +35,13 @@ export interface HistoryDetail {
       freeSpins: number;
     };
 
-    resultMultiplier: any;
+    resultMultiplier: {
+      isGetMultiplier: boolean;
+      isGetMultiplierRandom: boolean;
+      multiplier: number;
+      multiplierCombination: [];
+      multiplierRandom: number;
+    };
     storedIndex: [];
     totalWin: number;
     winLines: WinLine[];
@@ -71,12 +77,19 @@ export enum FilterBy {
 
 export enum SYMBOL_ID {
   WILD,
-  INGOT,
-  ANGBAO,
-  LANTERN,
-  FIRE_CRACKER,
-  RIBBON,
   COIN,
+  RIBBON,
+  FIRE_CRACKER,
+  LANTERN,
+  ANGBAO,
+  INGOT,
+}
+
+export enum MULTIPLIER {
+  ONE = 1,
+  TWO = 2,
+  FIVE = 5,
+  TEN = 10,
 }
 
 export enum E_LAYOUT_MODE {
@@ -89,3 +102,17 @@ export enum E_LAYOUT_MODE {
 export const url = "https://api.dev.revenge-games.com/dragon-fortune/bets";
 export const urlTotal =
   "https://api.dev.revenge-games.com/dragon-fortune/total-bets";
+
+export const configLine: number[][] = [
+  [0, 3, 6], //0
+  [1, 4, 7], //1
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6],
+];
+
+
+export const GetRandom = <T>(array: T[], startIndex = 0, length = array.length): T | null => {
+  const randomIndex = startIndex + Math.floor(Math.random() * length);
+  return array[randomIndex] === undefined ? null : array[randomIndex];
+};

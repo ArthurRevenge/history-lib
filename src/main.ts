@@ -2,9 +2,12 @@ import "./style.scss";
 import {
   CustomDateRange,
   FilterBy,
+  GetRandom,
   HistoryDetail,
   HistoryResponse,
+  MULTIPLIER,
   RecordTotal,
+  configLine,
   url,
   urlTotal,
 } from "./type";
@@ -15,8 +18,8 @@ import {
   displayTime,
   getBetTypeTitle,
   getDateTitle,
+  getSymbolImage,
   getTimeZoneOffset,
-  isChildOf,
   objectToQueryString,
   parseQueryParams,
   showHideNodeById,
@@ -385,9 +388,12 @@ export const renderDetail = (data: HistoryDetail) => {
     });
 
     selectionList.appendChild(selectionListItem);
+    const pa = document.createElement("div");
+    pa.classList.add("history-regular-container");
 
     const historyRegular = document.createElement("div");
     historyRegular.classList.add("history-regular");
+    pa.appendChild(historyRegular);
 
     const betInfo = document.createElement("div");
     betInfo.classList.add("bet-info");
@@ -415,24 +421,40 @@ export const renderDetail = (data: HistoryDetail) => {
     const betContainer = document.createElement("div");
     betContainer.classList.add("bet-container");
 
-    for (let i = 0; i < 3; i++) {
+    let winLines: number[] = [];
+    if (data.spinResult.winLines.length > 0) {
+      let lineIds = data.spinResult.winLines.map((w) => w.lineId);
+      winLines = Array.from(
+        new Set(
+          configLine.filter((_c, index) => lineIds.includes(index)).flat()
+        )
+      );
+    }
+
+    const reelWindow = data.spinResult.reelWindow;
+
+    for (let i = 0; i < reelWindow.length; i++) {
       const row = document.createElement("div");
       row.classList.add("row");
 
-      for (let j = 0; j < 3; j++) {
-        const item = document.createElement("div");
-        item.classList.add("item");
+      const arrInRow = reelWindow.map((r) => r[i]);
+      for (let j = 0; j < arrInRow.length; j++) {
+        const currentIndex = i + 3 * j;
+        const isWin = winLines.length > 0 && winLines.includes(currentIndex);
 
-        // if ((i * j) % 2 === 0) {
-        //   const bg = document.createElement("img");
-        //   bg.classList.add("img-bg");
-        //   bg.src = `/src/symbol/bg-win.png`;
-        //   item.appendChild(bg);
-        // }
+        const item = document.createElement("div");
+        item.classList.add("item", `index_${currentIndex.toString()}`);
+
+        if (isWin) {
+          const bg = document.createElement("img");
+          bg.classList.add("img-bg");
+          bg.src = `/src/symbol/bg-win.png`;
+          item.appendChild(bg);
+        }
 
         const symbol = document.createElement("img");
-        symbol.classList.add("symbol");
-        symbol.src = `/src/symbol/h1_coins.png`;
+        symbol.classList.add("symbol", isWin ? "full-light" : "no");
+        symbol.src = getSymbolImage(arrInRow[j]);
 
         item.appendChild(symbol);
         row.appendChild(item);
@@ -449,13 +471,37 @@ export const renderDetail = (data: HistoryDetail) => {
     const bgImage = document.createElement("img");
     bgImage.classList.add("bg");
     bgImage.src = "./src/symbol/ui_discoball_00.png";
-
-    const mulImage = document.createElement("img");
-    mulImage.classList.add("mul");
-    mulImage.src = "./src/symbol/mul_x10.png";
-
     globular.appendChild(bgImage);
-    globular.appendChild(mulImage);
+
+    //render multi
+    if (data.spinResult.resultMultiplier.multiplier !== MULTIPLIER.ONE) {
+      const mulImage = document.createElement("img");
+      mulImage.classList.add("mul");
+      mulImage.src = `./src/symbol/mul_x${data.spinResult.resultMultiplier.multiplier}.png`;
+      globular.appendChild(mulImage);
+    } else {
+      const random = GetRandom([
+        MULTIPLIER.TWO,
+        MULTIPLIER.FIVE,
+        MULTIPLIER.TEN,
+      ]);
+
+      const reel = document.createElement("div");
+      reel.classList.add("reel");
+
+      const reelLeft = document.createElement("img");
+      reelLeft.classList.add("reel-left");
+      reelLeft.src = `./src/symbol/mul_x${random}.png`;
+      reel.appendChild(reelLeft);
+
+      const reelRight = document.createElement("img");
+      reelRight.classList.add("reel-right");
+      reelRight.src = `./src/symbol/mul_x${random}.png`;
+      reel.appendChild(reelRight);
+      
+      globular.appendChild(reel);
+
+    }
 
     betResult.appendChild(globular);
 
@@ -482,7 +528,7 @@ export const renderDetail = (data: HistoryDetail) => {
     historyRegular.appendChild(payoutTitle);
 
     if (data.spinResult.winLines.length > 0) {
-      data.spinResult.winLines.forEach((x) => {
+      data.spinResult.winLines.forEach((x, index) => {
         const payoutDetail = document.createElement("div");
         payoutDetail.classList.add("payout-detail");
 
@@ -492,7 +538,13 @@ export const renderDetail = (data: HistoryDetail) => {
           "flex-item-center-content-between"
         );
         payoutItem.onclick = () =>
-          toggleTooltip(payoutDetail, data.betSize, data.betLevel, x.winSymbol);
+          toggleTooltip(
+            payoutDetail,
+            data.betSize,
+            data.betLevel,
+            x.winSymbol,
+            index
+          );
 
         const payoutLeft = document.createElement("div");
         payoutLeft.classList.add("left", "flex-item-center-content-between");
@@ -511,7 +563,11 @@ export const renderDetail = (data: HistoryDetail) => {
 
         const value = document.createElement("div");
         value.classList.add("value");
-        value.textContent = `${(data.betSize * data.betLevel * x.winSymbol).toFixed(2)}`;
+        value.textContent = `${(
+          data.betSize *
+          data.betLevel *
+          x.winSymbol
+        ).toFixed(2)}`;
 
         const ghBasicSprite = document.createElement("div");
         ghBasicSprite.classList.add("gh_basic_sprite");
@@ -527,6 +583,12 @@ export const renderDetail = (data: HistoryDetail) => {
         historyRegular.appendChild(payoutDetail);
       });
     } else {
+      if(data.spinResult.resultMultiplier.multiplier > MULTIPLIER.ONE){
+        const winMultiplier = document.createElement("div");
+        winMultiplier.classList.add("win-multiplier");
+        winMultiplier.textContent = `Win Multiplier x${data.spinResult.resultMultiplier.multiplier}`
+        historyRegular.appendChild(winMultiplier)
+      }
       const noWinning = document.createElement("div");
       noWinning.classList.add(
         "no-winning-combination-container",
@@ -536,8 +598,9 @@ export const renderDetail = (data: HistoryDetail) => {
 
       historyRegular.appendChild(noWinning);
     }
+    selectionList.appendChild(pa);
 
-    selectionList.appendChild(historyRegular);
+    pa.appendChild(historyRegular);
   }
 };
 
@@ -557,62 +620,60 @@ export const toggleTooltip = (
   parent: any,
   betSize: number,
   betLevel: number,
-  value: number
+  value: number,
+  index: number
 ) => {
   const tooltip = document.getElementById("payout-tooltip");
 
-  const isChild = isChildOf(tooltip, parent);
-  if(isChild){
-    tooltip?.remove();
-  }else{
+  if (tooltip) {
+    const classArray = Array.from(tooltip.classList);
+    if (classArray.some((c) => c === `t-${index}`)) {
+      tooltip?.remove();
+    } else {
+      tooltip?.remove();
+      const payoutTooltip = document.createElement("div");
+      payoutTooltip.id = "payout-tooltip";
+      payoutTooltip.classList.add(`t-${index}`);
+
+      const triangle = document.createElement("div");
+      triangle.classList.add("triangle");
+
+      const label = document.createElement("div");
+      label.classList.add("label");
+      label.textContent = "Bet Size x Bet Level x Symbol Payout Values";
+
+      const valueTooltip = document.createElement("div");
+      valueTooltip.classList.add("value");
+      valueTooltip.textContent = `${betSize} x ${betLevel} x ${value}`;
+
+      payoutTooltip.appendChild(triangle);
+      payoutTooltip.appendChild(label);
+      payoutTooltip.appendChild(valueTooltip);
+
+      parent.appendChild(payoutTooltip);
+    }
+  } else {
     const payoutTooltip = document.createElement("div");
     payoutTooltip.id = "payout-tooltip";
-  
+    payoutTooltip.classList.add(`t-${index}`);
+
     const triangle = document.createElement("div");
     triangle.classList.add("triangle");
-  
+
     const label = document.createElement("div");
     label.classList.add("label");
     label.textContent = "Bet Size x Bet Level x Symbol Payout Values";
-  
+
     const valueTooltip = document.createElement("div");
     valueTooltip.classList.add("value");
     valueTooltip.textContent = `${betSize} x ${betLevel} x ${value}`;
-  
+
     payoutTooltip.appendChild(triangle);
     payoutTooltip.appendChild(label);
     payoutTooltip.appendChild(valueTooltip);
-  
+
     parent.appendChild(payoutTooltip);
   }
-
-
-  // const payoutTooltip = document.createElement("div");
-  // payoutTooltip.id = "payout-tooltip";
-
-  // const triangle = document.createElement("div");
-  // triangle.classList.add("triangle");
-
-  // const label = document.createElement("div");
-  // label.classList.add("label");
-  // label.textContent = "Bet Size x Bet Level x Symbol Payout Values";
-
-  // const valueTooltip = document.createElement("div");
-  // valueTooltip.classList.add("value");
-  // valueTooltip.textContent = `${betSize} x ${betLevel} x ${value}`;
-
-  // payoutTooltip.appendChild(triangle);
-  // payoutTooltip.appendChild(label);
-  // payoutTooltip.appendChild(valueTooltip);
-
-  // parent.appendChild(payoutTooltip);
-
-  // const tooltip = document.getElementById("payout-tooltip");
-  // if (tooltip) {
-  //   const isShow =
-  //     window.getComputedStyle(tooltip).getPropertyValue("display") === "block";
-  //   showHideNodeById("payout-tooltip", !isShow, "block");
-  // }
 };
 
 export const selectDateBy = (filterBy: number) => {
@@ -660,7 +721,7 @@ class HistoryGameClient {
     this.pageSize = DEFAULT_PAGESIZE;
 
     this.initialize();
-    this.fetchData();
+    // this.fetchData();
   }
 
   static _instance = new HistoryGameClient();
@@ -742,7 +803,7 @@ class HistoryGameClient {
         this.fetchTotal(url2),
       ]);
 
-      showHideNodeById("loader-container", false);
+      // showHideNodeById("loader-container", false);
       this.histories = list.data;
       renderHistoryList(this.histories);
 
