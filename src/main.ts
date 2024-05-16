@@ -721,7 +721,7 @@ class HistoryGameClient {
     this.pageSize = DEFAULT_PAGESIZE;
 
     this.initialize();
-    // this.fetchData();
+    this.fetchData();
   }
 
   static _instance = new HistoryGameClient();
@@ -803,7 +803,7 @@ class HistoryGameClient {
         this.fetchTotal(url2),
       ]);
 
-      // showHideNodeById("loader-container", false);
+      showHideNodeById("loader-container", false);
       this.histories = list.data;
       renderHistoryList(this.histories);
 
