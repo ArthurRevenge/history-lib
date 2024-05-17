@@ -1,6 +1,5 @@
-"use strict";
-
 import "./style.scss";
+
 import {
   CustomDateRange,
   FilterBy,
@@ -10,8 +9,6 @@ import {
   MULTIPLIER,
   RecordTotal,
   configLine,
-  url,
-  urlTotal,
 } from "./type";
 import {
   QueryParams,
@@ -30,13 +27,18 @@ import {
   parseQueryParams,
   showHideNodeById,
 } from "./util";
+import path from "path";
+import fs from "fs";
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGESIZE = 10;
 
 export const createHistoryElement = () => {
+  const gameDiv = document.getElementById("Cocos3dGameContainer");
+
   const gameHistoryOverlay = document.createElement("div");
   gameHistoryOverlay.id = "game-history-overlay";
+  gameDiv?.appendChild(gameHistoryOverlay);
 
   const gameListViewWrapper = document.createElement("div");
   gameListViewWrapper.id = "game-list-view-wrapper";
@@ -172,9 +174,6 @@ export const createHistoryElement = () => {
     selectionListItem.onclick = () => selectDateBy(value);
     selectionList.appendChild(selectionListItem);
   });
-
-  const gameDiv = document.getElementById("Cocos3dGameContainer");
-  gameDiv?.appendChild(gameHistoryOverlay);
 };
 
 export const renderHistoryList = (data: HistoryDetail[]) => {
@@ -759,7 +758,10 @@ const chooseValue = (prefix: string, type: string, value: number) => {
   const node = document.getElementById(`${prefix}-${type}-value`);
   if (node) node.textContent = value.toString();
 
-  if(HistoryGameClient.instance() && HistoryGameClient.instance().customRange){
+  if (
+    HistoryGameClient.instance() &&
+    HistoryGameClient.instance().customRange
+  ) {
     if (prefix == "start") {
       if (type === "year") {
         HistoryGameClient.instance().customRange.numStartYear = value;
@@ -778,7 +780,6 @@ const chooseValue = (prefix: string, type: string, value: number) => {
       }
     }
   }
-  
 };
 
 const backToSelectionDate = () => {
@@ -908,7 +909,6 @@ class HistoryGameClient {
   }
 
   constructor() {
-    const d = new Date();
     this.recordTotal = null;
     this.histories = [];
 
@@ -924,8 +924,6 @@ class HistoryGameClient {
       numEndMonth: getCurrentDateDetails().month,
       numEndDay: getCurrentDateDetails().date,
     };
-    this.initialize();
-    // this.fetchData();
   }
 
   async fetchTable(url: string): Promise<HistoryResponse> {
@@ -966,33 +964,32 @@ class HistoryGameClient {
   };
 
   async fetchData(): Promise<void> {
-    //loading
-    showHideNodeById("loader-container", true, "flex");
-    const historyTableBody = document.getElementById("history-table-body");
-    historyTableBody?.replaceChildren("");
-
     //prepare data
     const dateRange = calculateDateRange(this.filterBy, this.customRange);
 
-    const baseQuery: QueryParams =
-      Object.entries(parseQueryParams()).length > 0
-        ? parseQueryParams()
-        : {
-            brandCode: "mock",
-            gameCode: "dragon-fortune",
-            groupCode: "weas",
-            playerToken: "s8z060uxk7320c40owgr1moo",
-          };
+    const baseQuery: QueryParams =parseQueryParams();
 
-    const url1 = `${url}?${objectToQueryString(baseQuery)}&startDate=${
+    const betUrl = (window as any)?._env_?.BET_URL ;
+    const betTotalUrl = (window as any)?._env_?.BET_TOTAL_URL ;
+
+    if(!baseQuery['gameCode'] || !betUrl || !betTotalUrl){
+      return;
+    }
+
+    const url1 = `${betUrl}?${objectToQueryString(baseQuery)}&startDate=${
       dateRange.startDate
     }&endDate=${dateRange.endDate}&skip=${this.countSkip()}&limit=${
       this.pageSize
     }`;
 
-    const url2 = `${urlTotal}?${objectToQueryString(baseQuery)}&startDate=${
+    const url2 = `${betTotalUrl}?${objectToQueryString(baseQuery)}&startDate=${
       dateRange.startDate
     }&endDate=${dateRange.endDate}`;
+
+    //loading
+    showHideNodeById("loader-container", true, "flex");
+    const historyTableBody = document.getElementById("history-table-body");
+    historyTableBody?.replaceChildren("");
 
     //effect
     try {
@@ -1018,7 +1015,9 @@ class HistoryGameClient {
     createHistoryElement();
     showHideHistory(true);
 
-    //register event when window changes
+    this.fetchData();
+
+    // //register event when window changes
     this.resizeComponent();
   };
 
@@ -1028,7 +1027,12 @@ class HistoryGameClient {
     function resizeHistory() {
       const container = document.getElementById("Cocos3dGameContainer");
       const history = document.getElementById("game-history-overlay");
-      if (container && history) {
+      if (
+        container &&
+        history &&
+        container?.offsetWidth &&
+        container.offsetHeight
+      ) {
         const containerWidth = container.offsetWidth;
         const containerHeight = container.offsetHeight;
 
@@ -1039,6 +1043,21 @@ class HistoryGameClient {
 
     resizeHistory();
   };
+
+   fetchStyle = (url: string) => {
+    return new Promise<void>((resolve, reject) => {
+      let link = document.createElement("link");
+      link.type = "text/css";
+      link.rel = "stylesheet";
+      link.onload = () => resolve();
+      link.onerror = () => reject();
+      link.href = url;
+  
+      let headScript = document.querySelector("script");
+      if (headScript && headScript.parentNode)
+        headScript.parentNode.insertBefore(link, headScript);
+    });
+  };
 }
 
-export default HistoryGameClient;
+export { HistoryGameClient, HistoryGameClient as default };
