@@ -99,9 +99,9 @@ export enum E_LAYOUT_MODE {
   JACKPOT = "JACKPOT",
 }
 
-export const url = "https://api.dev.revenge-games.com/dragon-fortune/bets";
+export const url = "https://api.dev.revenge-games.com/fortune-dragon/bets";
 export const urlTotal =
-  "https://api.dev.revenge-games.com/dragon-fortune/total-bets";
+  "https://api.dev.revenge-games.com/fortune-dragon/total-bets";
 
 export const configLine: number[][] = [
   [0, 3, 6], //0

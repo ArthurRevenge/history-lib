@@ -1,3 +1,5 @@
+"use strict";
+
 import "./style.scss";
 import {
   CustomDateRange,
@@ -16,8 +18,12 @@ import {
   calculateDateRange,
   displayDate,
   displayTime,
+  getAllDay,
+  getAllMonth,
   getBetTypeTitle,
+  getCurrentDateDetails,
   getDateTitle,
+  getListYearForFilter,
   getSymbolImage,
   getTimeZoneOffset,
   objectToQueryString,
@@ -498,9 +504,8 @@ export const renderDetail = (data: HistoryDetail) => {
       reelRight.classList.add("reel-right");
       reelRight.src = `./src/symbol/mul_x${random}.png`;
       reel.appendChild(reelRight);
-      
-      globular.appendChild(reel);
 
+      globular.appendChild(reel);
     }
 
     betResult.appendChild(globular);
@@ -583,11 +588,11 @@ export const renderDetail = (data: HistoryDetail) => {
         historyRegular.appendChild(payoutDetail);
       });
     } else {
-      if(data.spinResult.resultMultiplier.multiplier > MULTIPLIER.ONE){
+      if (data.spinResult.resultMultiplier.multiplier > MULTIPLIER.ONE) {
         const winMultiplier = document.createElement("div");
         winMultiplier.classList.add("win-multiplier");
-        winMultiplier.textContent = `Win Multiplier x${data.spinResult.resultMultiplier.multiplier}`
-        historyRegular.appendChild(winMultiplier)
+        winMultiplier.textContent = `Win Multiplier x${data.spinResult.resultMultiplier.multiplier}`;
+        historyRegular.appendChild(winMultiplier);
       }
       const noWinning = document.createElement("div");
       noWinning.classList.add(
@@ -602,6 +607,192 @@ export const renderDetail = (data: HistoryDetail) => {
 
     pa.appendChild(historyRegular);
   }
+};
+
+export const renderCalendar = () => {
+  const gameHistoryOverlay = document.getElementById("game-history-overlay");
+  if (gameHistoryOverlay) {
+    createCalendarContainer(gameHistoryOverlay);
+  }
+};
+
+function createCalendarContainer(parent: any) {
+  const calendarContainer = document.createElement("div");
+  calendarContainer.id = "calendar-container";
+
+  const header = document.createElement("div");
+  header.className = "header";
+
+  const navBack = document.createElement("div");
+  navBack.className = "nav-back";
+  navBack.onclick = backToSelectionDate;
+
+  const navImageLeft = document.createElement("div");
+  navImageLeft.className = "nav-image-left";
+
+  const ghArrow = document.createElement("div");
+  ghArrow.className = "gh-arrow";
+
+  navImageLeft.appendChild(ghArrow);
+  navBack.appendChild(navImageLeft);
+  header.appendChild(navBack);
+
+  const title = document.createElement("div");
+  title.className = "title color-yellow-highlight";
+  title.textContent = "Custom";
+  header.appendChild(title);
+
+  const right = document.createElement("div");
+  right.className = "right";
+  header.appendChild(right);
+
+  calendarContainer.appendChild(header);
+
+  const calendarViewBackground = document.createElement("div");
+  calendarViewBackground.id = "calendar-view-background";
+
+  const customPageContainer = document.createElement("div");
+  customPageContainer.id = "custom-page-container";
+
+  const startRow = createRow("Start", "start");
+  const endRow = createRow("End", "end");
+
+  customPageContainer.appendChild(startRow);
+  customPageContainer.appendChild(endRow);
+
+  const btnSubmit = document.createElement("div");
+  btnSubmit.id = "btn-submit";
+  btnSubmit.textContent = "Confirm";
+  btnSubmit.onclick = submitCustomDate;
+
+  customPageContainer.appendChild(btnSubmit);
+  calendarViewBackground.appendChild(customPageContainer);
+  calendarContainer.appendChild(calendarViewBackground);
+
+  parent.appendChild(calendarContainer);
+}
+
+const createRow = (labelText: string, prefix: string) => {
+  const row = document.createElement("div");
+  row.className = "row";
+
+  const label = document.createElement("label");
+  label.textContent = labelText;
+
+  const groupBtn = document.createElement("div");
+  groupBtn.className = "group-btn";
+
+  const yearBtn = createDatePicker(prefix, "year", getListYearForFilter());
+  const monthBtn = createDatePicker(prefix, "month", getAllMonth());
+  const dayBtn = createDatePicker(prefix, "day", getAllDay());
+
+  groupBtn.appendChild(yearBtn);
+  groupBtn.appendChild(monthBtn);
+  groupBtn.appendChild(dayBtn);
+
+  row.appendChild(label);
+  row.appendChild(groupBtn);
+
+  return row;
+};
+
+function createDatePicker(prefix: string, type: string, values: number[]) {
+  let value = 0;
+  if (prefix == "start") {
+    if (type === "year") {
+      value = HistoryGameClient.instance().customRange?.numStartYear || 0;
+    } else if (type === "month") {
+      value = HistoryGameClient.instance().customRange?.numStartMonth || 0;
+    } else if (type === "day") {
+      value = HistoryGameClient.instance().customRange?.numStartDay || 0;
+    }
+  } else if (prefix == "end") {
+    if (type === "year") {
+      value = HistoryGameClient.instance().customRange?.numEndYear || 0;
+    } else if (type === "month") {
+      value = HistoryGameClient.instance().customRange?.numEndMonth || 0;
+    } else if (type === "day") {
+      value = HistoryGameClient.instance().customRange?.numEndDay || 0;
+    }
+  }
+  const btnDate = document.createElement("div");
+  btnDate.id = `${prefix}-${type}`;
+  btnDate.className = "btn-date";
+
+  btnDate.onclick = () => toggleDropdown(prefix, type, values);
+
+  const valueDiv = document.createElement("div");
+  valueDiv.id = `${prefix}-${type}-value`;
+  valueDiv.textContent = value.toString();
+
+  btnDate.appendChild(valueDiv);
+
+  return btnDate;
+}
+
+const toggleDropdown = (prefix: string, type: string, values: number[]) => {
+  const btnDate = document.getElementById(`${prefix}-${type}`);
+  const dropDown = document.getElementById(`${prefix}-${type}-drop-down`);
+  if (btnDate) {
+    if (!dropDown) {
+      const dropDown = document.createElement("div");
+      dropDown.id = `${prefix}-${type}-drop-down`;
+      dropDown.className = "drop-down";
+      dropDown.style.display = "flex";
+
+      values.forEach((value) => {
+        const itemValue = document.createElement("div");
+        itemValue.className = "item-value";
+        itemValue.textContent = value.toString();
+        itemValue.onclick = () => chooseValue(prefix, type, value);
+        dropDown.appendChild(itemValue);
+      });
+
+      btnDate.appendChild(dropDown);
+    } else {
+      dropDown.remove();
+    }
+  }
+};
+
+const chooseValue = (prefix: string, type: string, value: number) => {
+  const node = document.getElementById(`${prefix}-${type}-value`);
+  if (node) node.textContent = value.toString();
+
+  if(HistoryGameClient.instance() && HistoryGameClient.instance().customRange){
+    if (prefix == "start") {
+      if (type === "year") {
+        HistoryGameClient.instance().customRange.numStartYear = value;
+      } else if (type === "month") {
+        HistoryGameClient.instance().customRange.numStartMonth = value;
+      } else if (type === "day") {
+        HistoryGameClient.instance().customRange.numStartDay = value;
+      }
+    } else if (prefix == "end") {
+      if (type === "year") {
+        HistoryGameClient.instance().customRange.numEndYear = value;
+      } else if (type === "month") {
+        HistoryGameClient.instance().customRange.numEndMonth = value;
+      } else if (type === "day") {
+        HistoryGameClient.instance().customRange.numEndDay = value;
+      }
+    }
+  }
+  
+};
+
+const backToSelectionDate = () => {
+  const calendar = document.getElementById("calendar-container");
+  if (calendar) calendar.remove();
+
+  HistoryGameClient.instance().fetchData();
+};
+
+export const submitCustomDate = () => {
+  const calendar = document.getElementById("calendar-container");
+  if (calendar) calendar.remove();
+  showHideNodeById("selection-date");
+  HistoryGameClient.instance().fetchData();
 };
 
 export const showHideHistory = (isShow: boolean) => {
@@ -686,7 +877,7 @@ export const selectDateBy = (filterBy: number) => {
       HistoryGameClient.instance().fetchData();
     }
   } else if (filterBy === FilterBy.Custom) {
-    //TODO: open new section filter
+    renderCalendar();
   } else {
   }
 
@@ -705,29 +896,36 @@ class HistoryGameClient {
   histories: HistoryDetail[];
   filterBy: number;
   recordTotal: RecordTotal | null;
-  customRange: CustomDateRange | null;
+  customRange: CustomDateRange;
 
   page: number;
   pageSize: number;
-
-  constructor() {
-    this.recordTotal = null;
-    this.histories = [];
-
-    this.filterBy = FilterBy.Today;
-    this.customRange = null;
-
-    this.page = DEFAULT_PAGE;
-    this.pageSize = DEFAULT_PAGESIZE;
-
-    this.initialize();
-    this.fetchData();
-  }
 
   static _instance = new HistoryGameClient();
 
   static instance(): HistoryGameClient {
     return HistoryGameClient._instance;
+  }
+
+  constructor() {
+    const d = new Date();
+    this.recordTotal = null;
+    this.histories = [];
+
+    this.filterBy = FilterBy.Today;
+
+    this.page = DEFAULT_PAGE;
+    this.pageSize = DEFAULT_PAGESIZE;
+    this.customRange = {
+      numStartYear: getCurrentDateDetails().year,
+      numStartMonth: getCurrentDateDetails().month,
+      numStartDay: getCurrentDateDetails().date,
+      numEndYear: getCurrentDateDetails().year,
+      numEndMonth: getCurrentDateDetails().month,
+      numEndDay: getCurrentDateDetails().date,
+    };
+    this.initialize();
+    // this.fetchData();
   }
 
   async fetchTable(url: string): Promise<HistoryResponse> {

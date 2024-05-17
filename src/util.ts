@@ -134,22 +134,47 @@ export const isChildOf = (child: HTMLElement | null, parent: HTMLElement) => {
   return false;
 };
 
-
 export const getSymbolImage = (id: SYMBOL_ID) => {
   switch (id) {
-      case SYMBOL_ID.WILD:
-          return '/src/symbol/s_wild.png'
-      case SYMBOL_ID.COIN:
-        return '/src/symbol/h1_coins.png'
-      case SYMBOL_ID.RIBBON:
-        return '/src/symbol/h2_ribbon.png'
-      case SYMBOL_ID.FIRE_CRACKER:
-        return '/src/symbol/h3_firecracker.png'
-      case SYMBOL_ID.LANTERN:
-        return '/src/symbol/h4_lantern.png'
-      case SYMBOL_ID.ANGBAO:
-        return '/src/symbol/h5_angbao.png'
-      case SYMBOL_ID.INGOT:
-        return '/src/symbol/h6_ingot.png'
+    case SYMBOL_ID.WILD:
+      return "/src/symbol/s_wild.png";
+    case SYMBOL_ID.COIN:
+      return "/src/symbol/h1_coins.png";
+    case SYMBOL_ID.RIBBON:
+      return "/src/symbol/h2_ribbon.png";
+    case SYMBOL_ID.FIRE_CRACKER:
+      return "/src/symbol/h3_firecracker.png";
+    case SYMBOL_ID.LANTERN:
+      return "/src/symbol/h4_lantern.png";
+    case SYMBOL_ID.ANGBAO:
+      return "/src/symbol/h5_angbao.png";
+    case SYMBOL_ID.INGOT:
+      return "/src/symbol/h6_ingot.png";
   }
+};
+
+export const getAllMonth = () => {
+  return Array.from({ length: 12 }, (_, index) => index + 1);
+};
+
+export const getAllDay = () => {
+  return Array.from({ length: 31 }, (_, index) => index + 1);
+};
+
+
+export const getListYearForFilter = () => {
+  const currentYear = new Date().getFullYear();
+  const lastYear = currentYear - 1;
+  const twoYearsAgo = currentYear - 2;
+
+  return [twoYearsAgo, lastYear, currentYear];
+};
+
+export const getCurrentDateDetails = () => {
+  const currentDate = new Date();
+  const date = currentDate.getDate();
+  const month = currentDate.getMonth() + 1;
+  const year = currentDate.getFullYear();
+
+  return { date, month, year };
 }
