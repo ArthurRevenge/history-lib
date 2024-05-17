@@ -793,6 +793,9 @@ export const submitCustomDate = () => {
   const calendar = document.getElementById("calendar-container");
   if (calendar) calendar.remove();
   showHideNodeById("selection-date");
+
+  HistoryGameClient.instance().filterBy = FilterBy.Custom;
+  HistoryGameClient.instance().page = DEFAULT_PAGE;
   HistoryGameClient.instance().fetchData();
 };
 
